@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beauty AI Orchestrator — Recomendação Hiperpersonalizada Multi-Agente</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js via CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            rosewood: {
+              50: '#fdf7f8',
+              100: '#faecef',
+              200: '#f5d6dd',
+              500: '#d45d79',
+              600: '#be4360',
+              700: '#9e324c',
+              900: '#541a28',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    [x-cloak] { display: none !important; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen" x-data="beautyOrchestratorApp()">
+
+  <!-- Header / Architecture Banner -->
+  <header class="bg-gradient-to-r from-slate-900 via-rosewood-900 to-slate-900 text-white border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-rose-200 text-xs font-medium mb-2">
+            <span>⚡ LangGraph Fan-out / Fan-in</span>
+            <span>•</span>
+            <span>Gemini 2.5 Flash + GPT-4o + Claude 3.7 Sonnet</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">
+            Beauty AI Orchestrator
+          </h1>
+          <p class="text-sm text-slate-300 mt-1 max-w-2xl">
+            Sistema multi-agente de recomendação hiperpersonalizada de Skincare e Beleza &amp; Maquiagem: digite a marca para buscar e confirmar os produtos correspondentes, filtre por custo-benefício em grandes farmácias (Selo Reclame Aqui) e traduza seu tom via Findation.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">🏆 Droga Raia &amp; Drogasil (RA1000)</span>
+          <span class="px-2.5 py-1.5 rounded-lg bg-white/10 border border-white/15">Época Cosméticos</span>
+          <span class="px-2.5 py-1.5 rounded-lg bg-white/10 border border-white/15">Beleza na Web</span>
+          <span class="px-2.5 py-1.5 rounded-lg bg-white/10 border border-white/15">Amazon</span>
+          <span class="px-2.5 py-1.5 rounded-lg bg-white/10 border border-white/15">Principia</span>
+          <span class="px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-200 border border-amber-400/30">Findation Shade Match</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- STEP 1.A: ADAPTIVE DUAL-FLOW INTERFACE -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <!-- Primary Journey Tabs (Skincare vs. Beleza & Maquiagem) -->
+      <div class="grid grid-cols-2 border-b border-slate-200 bg-slate-100/70">
+        <button
+          type="button"
+          @click="setMainJourney('skincare')"
+          :class="mainJourney === 'skincare'
+            ? 'bg-white text-rosewood-700 border-b-2 border-rosewood-600 font-semibold shadow-sm'
+            : 'text-slate-600 hover:text-slate-900'"
+          class="py-4 px-6 text-center text-sm sm:text-base transition flex items-center justify-center gap-2"
+        >
+          <span>🧴</span>
+          <span>Jornada Skincare</span>
+        </button>
+        <button
+          type="button"
+          @click="setMainJourney('maquiagem')"
+          :class="mainJourney === 'maquiagem'
+            ? 'bg-white text-rosewood-700 border-b-2 border-rosewood-600 font-semibold shadow-sm'
+            : 'text-slate-600 hover:text-slate-900'"
+          class="py-4 px-6 text-center text-sm sm:text-base transition flex items-center justify-center gap-2"
+        >
+          <span>💄</span>
+          <span>Jornada Beleza &amp; Maquiagem</span>
+        </button>
+      </div>
+
+      <div class="p-6 sm:p-8 space-y-8">
+        <!-- Skincare Sub-Mode Selector (Rotina Completa vs. Produto Específico) -->
+        <div x-show="mainJourney === 'skincare'" x-transition class="space-y-3">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Modo da Jornada Skincare
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              @click="skincareMode = 'rotina_completa'"
+              :class="skincareMode === 'rotina_completa'
+                ? 'border-rosewood-600 bg-rosewood-50/70 text-rosewood-900 ring-2 ring-rosewood-500/20'
+                : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'"
+              class="p-4 rounded-xl border text-left transition flex items-start gap-3"
+            >
+              <span class="text-xl mt-0.5">✨</span>
+              <div>
+                <div class="font-semibold text-sm">Modo Rotina Completa (3 Etapas)</div>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  Estrutura uma cesta equilibrada entre Limpeza, Hidratação e Proteção Solar somando até o seu orçamento total.
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              @click="skincareMode = 'produto_especifico'"
+              :class="skincareMode === 'produto_especifico'
+                ? 'border-rosewood-600 bg-rosewood-50/70 text-rosewood-900 ring-2 ring-rosewood-500/20'
+                : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'"
+              class="p-4 rounded-xl border text-left transition flex items-start gap-3"
+            >
+              <span class="text-xl mt-0.5">🎯</span>
+              <div>
+                <div class="font-semibold text-sm">Modo Produto Específico (1 Categoria)</div>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  Foca em uma única categoria exata (Protetor Solar, Hidratante, Sérum, Tratamento, Cleansing Oil, etc.).
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Common Profile Row: Skin Type, Sensitivity, Budget -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Tipo de Pele -->
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              Tipo de Pele
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <template x-for="st in skinTypeOptions" :key="st.value">
+                <button
+                  type="button"
+                  @click="form.skin_type = st.value"
+                  :class="form.skin_type === st.value
+                    ? 'bg-slate-900 text-white border-slate-900 font-medium'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'"
+                  class="py-2.5 px-3 text-xs sm:text-sm rounded-lg border transition text-center"
+                  x-text="st.label"
+                ></button>
+              </template>
+            </div>
+          </div>
+
+          <!-- Sensibilidade Cutânea -->
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              Sensibilidade da Pele
+            </label>
+            <div
+              @click="form.is_sensitive = !form.is_sensitive"
+              :class="form.is_sensitive
+                ? 'border-amber-500 bg-amber-50/70 text-amber-900'
+                : 'border-slate-200 bg-slate-50/60 text-slate-700'"
+              class="p-3.5 rounded-xl border cursor-pointer transition flex items-center justify-between"
+            >
+              <div class="pr-2">
+                <div class="text-sm font-semibold flex items-center gap-1.5">
+                  <span x-text="form.is_sensitive ? '🛡️ Pele Sensível / Reativa' : 'Pele Tolerante / Normal'"></span>
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  Ativa o Guardrail contra álcool desnaturado, perfume forte e comedogênicos.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                x-model="form.is_sensitive"
+                class="h-5 w-5 rounded border-slate-300 text-rosewood-600 focus:ring-rosewood-500"
+              />
+            </div>
+          </div>
+
+          <!-- Orçamento Máximo -->
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              <span x-text="mainJourney === 'skincare' && skincareMode === 'rotina_completa' ? 'Orçamento Total da Rotina (R$)' : 'Orçamento Máximo do Produto (R$)'"></span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-semibold">R$</span>
+              <input
+                type="number"
+                step="5"
+                min="15"
+                x-model.number="form.budget"
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-rosewood-600 focus:ring-2 focus:ring-rosewood-500/20 text-slate-900 font-semibold"
+                placeholder="85.00"
+              />
+            </div>
+            <p class="text-xs text-slate-500 mt-1.5">
+              Avalia custo-benefício em grandes farmácias (Droga Raia, Drogasil, Época, Principia) respeitando seu teto.
+            </p>
+          </div>
+        </div>
+
+        <!-- CONDITIONAL FIELDS FOR SKINCARE: ROTINA COMPLETA -->
+        <div x-show="mainJourney === 'skincare' && skincareMode === 'rotina_completa'" x-transition class="space-y-4 pt-2 border-t border-slate-100">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              Problemas Ativos na Pele (Selecione um ou mais para mapear ativos)
+            </label>
+            <div class="flex flex-wrap gap-2">
+              <template x-for="prob in skincareProblemOptions" :key="prob.value">
+                <button
+                  type="button"
+                  @click="toggleProblem(prob.value)"
+                  :class="form.active_problems.includes(prob.value)
+                    ? 'bg-rosewood-600 text-white border-rosewood-600 shadow-sm'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'"
+                  class="px-3.5 py-2 rounded-full border text-xs font-medium transition flex items-center gap-1.5"
+                >
+                  <span x-text="form.active_problems.includes(prob.value) ? '✓' : '+'"></span>
+                  <span x-text="prob.label"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONDITIONAL FIELDS FOR SKINCARE: PRODUTO ESPECÍFICO -->
+        <div x-show="mainJourney === 'skincare' && skincareMode === 'produto_especifico'" x-transition class="space-y-5 pt-2 border-t border-slate-100">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              Selecione a Categoria Exata de Skincare
+            </label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <template x-for="cat in skincareCategories" :key="cat.value">
+                <button
+                  type="button"
+                  @click="form.skincare_category = cat.value"
+                  :class="form.skincare_category === cat.value
+                    ? 'bg-rosewood-600 text-white border-rosewood-600 font-semibold shadow-sm'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'"
+                  class="p-3 rounded-xl border text-xs sm:text-sm transition text-left flex items-center justify-between"
+                >
+                  <span x-text="cat.label"></span>
+                  <span x-show="form.skincare_category === cat.value">●</span>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <!-- Conditional Field: Tratamento -> Problema Específico -->
+          <div
+            x-show="form.skincare_category === 'tratamento'"
+            x-transition
+            class="p-4 rounded-xl bg-rosewood-50/70 border border-rosewood-200 space-y-2"
+          >
+            <label class="block text-sm font-semibold text-rosewood-900">
+              🎯 Qual o problema específico a ser combatido pelo Tratamento? (Obrigatório)
+            </label>
+            <input
+              type="text"
+              x-model="form.target_problem"
+              placeholder="Ex: Melasma persistente nas maçãs do rosto e manchas pós-acne"
+              class="w-full px-4 py-2.5 rounded-lg border border-rosewood-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-rosewood-500"
+            />
+          </div>
+        </div>
+
+        <!-- CONDITIONAL SUNSCREEN WITH TINT SECTION -->
+        <div
+          x-show="mainJourney === 'skincare' && (skincareMode === 'rotina_completa' || form.skincare_category === 'protetor_solar' || hasTintedInLoved)"
+          x-transition
+          class="p-5 rounded-xl bg-amber-50/80 border border-amber-200 space-y-4"
+        >
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <div class="text-sm font-semibold text-amber-950 flex items-center gap-2">
+                <span>☀️ Preferência por Protetor Solar Com Cor (Findation Transversal)</span>
+                <span
+                  x-show="hasTintedInLoved"
+                  class="px-2 py-0.5 text-[11px] rounded-full bg-amber-200 text-amber-900 font-bold"
+                >
+                  Ativado automaticamente pelos seus Favoritos!
+                </span>
+              </div>
+              <p class="text-xs text-amber-800 mt-0.5">
+                Digite abaixo a <strong>Marca da Base ou Protetor</strong> que já dá certo em você. Após confirmar a marca, escolha o produto correspondente e o seu tom.
+              </p>
+            </div>
+            <label class="inline-flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                x-model="form.prefers_tinted_sunscreen"
+                class="h-5 w-5 rounded border-amber-400 text-rosewood-600 focus:ring-rosewood-500"
+              />
+              <span class="text-xs font-semibold text-amber-950">Quero Versão Com Cor</span>
+            </label>
+          </div>
+
+          <!-- Type Brand -> Confirm Brand -> See Brand's Bases/Sunscreens -> Pick Shade -->
+          <div x-show="form.prefers_tinted_sunscreen || hasTintedInLoved" x-transition class="p-4 rounded-xl bg-white border border-amber-200 space-y-3">
+            <div class="text-xs font-bold uppercase tracking-wider text-amber-900">
+              🎨 Passo 1: Digite a Marca da sua Base ou Protetor de Referência
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                x-model="shadeBrandSearch.brandInput"
+                @keydown.enter.prevent="searchBrandForShadeReference()"
+                placeholder="Marca BR ou EUA/Gringa (ex: mac, fenty, rare beauty, dragun beauty, bruna tavares, isdin, la roche...)"
+                class="flex-1 px-3.5 py-2 rounded-lg border border-amber-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+              <button
+                type="button"
+                @click="searchBrandForShadeReference()"
+                :disabled="shadeBrandSearch.loading"
+                class="px-4 py-2 rounded-lg bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition shrink-0"
+              >
+                <span x-show="!shadeBrandSearch.loading">1. Confirmar Marca &amp; Ver Bases</span>
+                <span x-show="shadeBrandSearch.loading">Buscando...</span>
+              </button>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+              <span class="text-[11px] text-amber-900 font-semibold">Findation (BR &amp; EUA):</span>
+              <template x-for="b in ['ISDIN', 'La Roche-Posay', 'Mantecorp Skincare', 'SHEGLAM', 'M·A·C Cosmetics', 'Fenty Beauty', 'Rare Beauty', 'Bruna Tavares', 'Boca Rosa Beauty', 'Maybelline NY', 'NARS', 'Estée Lauder', 'Dragun Beauty']" :key="b">
+                <button
+                  type="button"
+                  @click="shadeBrandSearch.brandInput = b; searchBrandForShadeReference()"
+                  class="px-2 py-0.5 rounded-full text-[11px] bg-amber-100/80 hover:bg-amber-200 text-amber-950 font-medium transition"
+                  x-text="b"
+                ></button>
+              </template>
+            </div>
+
+            <!-- Alert when Brand is NOT found -->
+            <div
+              x-show="shadeBrandSearch.notFoundMessage"
+              x-transition
+              class="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2"
+            >
+              <span>⚠️</span>
+              <span x-text="shadeBrandSearch.notFoundMessage"></span>
+            </div>
+
+            <!-- Step 2: Products of the Confirmed Brand appear here -->
+            <div x-show="shadeBrandSearch.confirmedBrand" x-transition class="pt-2 border-t border-amber-100 space-y-3">
+              <div class="text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+                ✓ Marca Confirmada: <strong x-text="shadeBrandSearch.confirmedBrand"></strong> — Escolha abaixo o produto correspondente dessa marca e o seu tom:
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">2. Produto Correspondente da Marca</label>
+                  <select
+                    x-model="shadeBrandSearch.selectedProductIndex"
+                    @change="onShadeSearchProductChange()"
+                    class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-medium"
+                  >
+                    <template x-for="(prod, idx) in shadeBrandSearch.products" :key="prod.official_name">
+                      <option :value="idx" x-text="prod.official_name"></option>
+                    </template>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">3. Seu Tom / Cor neste Produto</label>
+                  <div class="flex gap-2">
+                    <select
+                      x-show="getShadeSearchAvailableShades().length > 0"
+                      x-model="shadeBrandSearch.selectedShade"
+                      class="flex-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-bold text-indigo-900"
+                    >
+                      <template x-for="sh in getShadeSearchAvailableShades()" :key="sh">
+                        <option :value="sh" x-text="sh"></option>
+                      </template>
+                    </select>
+                    <input
+                      type="text"
+                      x-model="shadeBrandSearch.customShade"
+                      placeholder="Ou digite o tom (ex: NC25)"
+                      class="w-36 px-2.5 py-2 rounded-lg border border-slate-300 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-1">
+                <span class="text-[11px] text-slate-500">
+                  💡 Você pode confirmar e adicionar <strong>mais de uma base ou corretivo</strong> para cruzar tons no Findation.
+                </span>
+                <button
+                  type="button"
+                  @click="confirmShadeProductSelection()"
+                  class="px-4 py-2 rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold transition shadow-sm shrink-0"
+                >
+                  + Confirmar e Adicionar Base / Tom abaixo
+                </button>
+              </div>
+            </div>
+
+            <!-- Feedback message when a shade reference is added -->
+            <div
+              x-show="shadeBrandSearch.justAddedMessage"
+              x-transition
+              class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-semibold flex items-center justify-between"
+            >
+              <span x-text="shadeBrandSearch.justAddedMessage"></span>
+              <button type="button" @click="shadeBrandSearch.justAddedMessage = ''" class="text-emerald-700 font-bold px-1">&times;</button>
+            </div>
+
+            <!-- Added Reference Bases / Shades List right below -->
+            <div x-show="getConfirmedShadeCards().length > 0" x-transition class="pt-3 border-t border-amber-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-indigo-950">
+                  🎨 Bases / Corretivos de Referência Adicionados (<span x-text="getConfirmedShadeCards().length"></span>):
+                </span>
+                <span class="text-[11px] text-indigo-700 font-medium">
+                  Busque outra marca acima se quiser adicionar mais uma base!
+                </span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <template x-for="scard in getConfirmedShadeCards()" :key="scard.id">
+                  <div class="p-3 rounded-xl bg-indigo-50/80 border-2 border-indigo-400 flex items-start justify-between gap-2 shadow-sm">
+                    <div class="space-y-1">
+                      <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="px-2 py-0.5 rounded bg-indigo-700 text-white text-[10px] font-bold uppercase" x-text="scard.brand"></span>
+                        <span class="px-2 py-0.5 rounded bg-amber-200 text-amber-950 text-[11px] font-extrabold" x-text="'Tom: ' + scard.detected_shade"></span>
+                      </div>
+                      <div class="text-xs font-bold text-slate-900" x-text="scard.official_name"></div>
+                      <div class="text-[11px] text-indigo-800" x-text="'Subtom: ' + (scard.detected_undertone || 'Neutro-Quente')"></div>
+                    </div>
+                    <button
+                      type="button"
+                      @click="removeCardById(scard.id)"
+                      class="text-xs text-rose-600 hover:text-rose-800 font-bold px-2 py-1 rounded hover:bg-rose-50 transition"
+                      title="Remover esta base"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONDITIONAL FIELDS FOR JORNADA BELEZA & MAQUIAGEM -->
+        <div x-show="mainJourney === 'maquiagem'" x-transition class="space-y-5 pt-2 border-t border-slate-100">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              Categoria de Beleza &amp; Maquiagem
+            </label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <template x-for="mcat in makeupCategories" :key="mcat.value">
+                <button
+                  type="button"
+                  @click="form.makeup_category = mcat.value"
+                  :class="form.makeup_category === mcat.value
+                    ? 'bg-rosewood-600 text-white border-rosewood-600 font-semibold shadow-sm'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'"
+                  class="p-3 rounded-xl border text-xs sm:text-sm transition text-left flex items-center justify-between"
+                >
+                  <span x-text="mcat.label"></span>
+                  <span x-show="form.makeup_category === mcat.value">●</span>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <!-- Type Brand -> Confirm Brand -> See Brand's Bases -> Pick Shade for Makeup Journey -->
+          <div class="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200 space-y-3">
+            <div class="text-xs font-bold uppercase tracking-wider text-indigo-950">
+              🎨 Âncora de Tom (Findation): Digite a Marca da Base/Corretivo que já deu certo em você
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                x-model="shadeBrandSearch.brandInput"
+                @keydown.enter.prevent="searchBrandForShadeReference()"
+                placeholder="Marca BR ou Norte-Americana no Findation (ex: fenty, rare beauty, dragun beauty, mac, nars, bruna tavares, boca rosa, eudora...)"
+                class="flex-1 px-3.5 py-2 rounded-lg border border-indigo-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <button
+                type="button"
+                @click="searchBrandForShadeReference()"
+                :disabled="shadeBrandSearch.loading"
+                class="px-4 py-2 rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold transition shrink-0"
+              >
+                <span x-show="!shadeBrandSearch.loading">1. Confirmar Marca &amp; Buscar Bases</span>
+                <span x-show="shadeBrandSearch.loading">Buscando...</span>
+              </button>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+              <span class="text-[11px] text-indigo-900 font-semibold">Marcas Findation (BR &amp; EUA):</span>
+              <template x-for="b in ['SHEGLAM', 'M·A·C Cosmetics', 'Fenty Beauty', 'Rare Beauty', 'NARS', 'Estée Lauder', 'Too Faced', 'Huda Beauty', 'Haus Labs by Lady Gaga', 'Charlotte Tilbury', 'Tarte Cosmetics', 'e.l.f. Cosmetics', 'NYX Professional Makeup', 'Dragun Beauty', 'Maybelline NY', 'Bruna Tavares', 'Boca Rosa Beauty', 'Mari Maria Makeup', 'Natura Una', 'Eudora (Niina Secrets / Glam)', 'O Boticário (Make B.)', 'Vizzela', 'Fran by Franciny Ehlke']" :key="b">
+                <button
+                  type="button"
+                  @click="shadeBrandSearch.brandInput = b; searchBrandForShadeReference()"
+                  class="px-2 py-0.5 rounded-full text-[11px] bg-indigo-100/80 hover:bg-indigo-200 text-indigo-950 font-medium transition"
+                  x-text="b"
+                ></button>
+              </template>
+            </div>
+
+            <!-- Alert when Brand is NOT found -->
+            <div
+              x-show="shadeBrandSearch.notFoundMessage"
+              x-transition
+              class="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2"
+            >
+              <span>⚠️</span>
+              <span x-text="shadeBrandSearch.notFoundMessage"></span>
+            </div>
+
+            <!-- Step 2: Corresponding Bases of the Confirmed Brand -->
+            <div x-show="shadeBrandSearch.confirmedBrand" x-transition class="pt-2 border-t border-indigo-200/70 space-y-3">
+              <div class="text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+                ✓ Marca Confirmada: <strong x-text="shadeBrandSearch.confirmedBrand"></strong> — Escolha a base correspondente e o seu tom:
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">2. Base / Produto Correspondente da Marca</label>
+                  <select
+                    x-model="shadeBrandSearch.selectedProductIndex"
+                    @change="onShadeSearchProductChange()"
+                    class="w-full px-3 py-2 rounded-lg border border-indigo-300 bg-white text-xs sm:text-sm font-medium"
+                  >
+                    <template x-for="(prod, idx) in shadeBrandSearch.products" :key="prod.official_name">
+                      <option :value="idx" x-text="prod.official_name"></option>
+                    </template>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">3. Seu Tom nessa Base</label>
+                  <div class="flex gap-2">
+                    <select
+                      x-show="getShadeSearchAvailableShades().length > 0"
+                      x-model="shadeBrandSearch.selectedShade"
+                      class="flex-1 px-3 py-2 rounded-lg border border-indigo-300 bg-white text-xs sm:text-sm font-bold text-indigo-900"
+                    >
+                      <template x-for="sh in getShadeSearchAvailableShades()" :key="sh">
+                        <option :value="sh" x-text="sh"></option>
+                      </template>
+                    </select>
+                    <input
+                      type="text"
+                      x-model="shadeBrandSearch.customShade"
+                      placeholder="Ou digite o tom"
+                      class="w-36 px-2.5 py-2 rounded-lg border border-indigo-300 text-xs bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-1">
+                <span class="text-[11px] text-indigo-900">
+                  💡 Você pode confirmar e adicionar <strong>mais de uma base ou corretivo</strong> para cruzar tons no Findation.
+                </span>
+                <button
+                  type="button"
+                  @click="confirmShadeProductSelection()"
+                  class="px-4 py-2 rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold transition shadow-sm shrink-0"
+                >
+                  + Confirmar e Adicionar Base / Tom abaixo
+                </button>
+              </div>
+            </div>
+
+            <!-- Feedback message when a shade reference is added -->
+            <div
+              x-show="shadeBrandSearch.justAddedMessage"
+              x-transition
+              class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-semibold flex items-center justify-between"
+            >
+              <span x-text="shadeBrandSearch.justAddedMessage"></span>
+              <button type="button" @click="shadeBrandSearch.justAddedMessage = ''" class="text-emerald-700 font-bold px-1">&times;</button>
+            </div>
+
+            <!-- Added Reference Bases / Shades List right below -->
+            <div x-show="getConfirmedShadeCards().length > 0" x-transition class="pt-3 border-t border-indigo-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-indigo-950">
+                  🎨 Bases / Corretivos de Referência Adicionados (<span x-text="getConfirmedShadeCards().length"></span>):
+                </span>
+                <span class="text-[11px] text-indigo-700 font-medium">
+                  Busque outra marca acima se quiser adicionar mais uma base!
+                </span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <template x-for="scard in getConfirmedShadeCards()" :key="scard.id">
+                  <div class="p-3 rounded-xl bg-white border-2 border-indigo-500 flex items-start justify-between gap-2 shadow-sm">
+                    <div class="space-y-1">
+                      <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="px-2 py-0.5 rounded bg-indigo-700 text-white text-[10px] font-bold uppercase" x-text="scard.brand"></span>
+                        <span class="px-2 py-0.5 rounded bg-amber-200 text-amber-950 text-[11px] font-extrabold" x-text="'Tom: ' + scard.detected_shade"></span>
+                      </div>
+                      <div class="text-xs font-bold text-slate-900" x-text="scard.official_name"></div>
+                      <div class="text-[11px] text-indigo-800" x-text="'Subtom: ' + (scard.detected_undertone || 'Neutro-Quente')"></div>
+                    </div>
+                    <button
+                      type="button"
+                      @click="removeCardById(scard.id)"
+                      class="text-xs text-rose-600 hover:text-rose-800 font-bold px-2 py-1 rounded hover:bg-rose-50 transition"
+                      title="Remover esta base"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conditional Free-Text Box for Chromatic Finish Categories (blush, sombra, contorno, iluminador) -->
+          <div
+            x-show="['blush', 'sombra', 'contorno', 'iluminador'].includes(form.makeup_category)"
+            x-transition
+            class="p-4 rounded-xl bg-fuchsia-50/70 border border-fuchsia-200 space-y-2"
+          >
+            <label class="block text-sm font-semibold text-fuchsia-950">
+              🎨 Descreva a cor desejada e o efeito esperado para <span class="uppercase" x-text="form.makeup_category"></span> (Obrigatório)
+            </label>
+            <textarea
+              rows="2"
+              x-model="form.chromatic_expectation"
+              placeholder="Ex: blush pêssego queimado sem partículas de brilho, efeito aveludado que não marque poros"
+              class="w-full px-4 py-2.5 rounded-lg border border-fuchsia-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 1.B: FREE-FORM LOVED & DISLIKED PRODUCTS (NO CONFIRMATION NEEDED) + OPTIONAL REASON -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-rosewood-600">Etapa 1.B • Preferências e Reclamações em Linguagem Livre (IA Generativa)</span>
+          <h2 class="text-lg sm:text-xl font-bold text-slate-900">
+            Produtos Favoritos (💚) e Não Favoritos (🚫) — Sem Confirmação
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500">
+            Escreva os produtos <strong>da sua própria forma</strong> (sem precisar confirmar marca ou catálogo — a IA generativa identifica a correspondência automaticamente). Se desejar, conte <strong>por que gosta ou não gosta</strong> de cada um <em>(opcional)</em>.
+          </p>
+        </div>
+        <button
+          type="button"
+          @click="loadPresetExample()"
+          class="self-start sm:self-auto text-xs font-semibold px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+        >
+          ⚡ Carregar Exemplo Completo
+        </button>
+      </div>
+
+      <!-- Free-form Inputs for Loved & Disliked Products + Optional Reason -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Loved Products Box -->
+        <div class="p-5 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-3.5">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-emerald-950">💚 Produto Favorito (O que deu certo)</span>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Sem confirmação</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-emerald-900 mb-1">
+              Descreva o produto do seu jeito
+            </label>
+            <input
+              type="text"
+              x-model="freeformEntry.lovedName"
+              @keydown.enter.prevent="addFreeformProduct('loved')"
+              placeholder="Ex: protetor da principia ps-01, hydro boost da neutrogena, isdin com cor..."
+              class="w-full px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-emerald-800 mb-1">
+              Observações sobre o produto <span class="font-normal text-emerald-700">(Opcional — pode citar pontos positivos e negativos)</span>
+            </label>
+            <input
+              type="text"
+              x-model="freeformEntry.lovedReason"
+              @keydown.enter.prevent="addFreeformProduct('loved')"
+              placeholder="Ex: Rende bastante, não deixa white cast, o único problema é precisar selar com pó..."
+              class="w-full px-3.5 py-2 rounded-xl border border-emerald-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+
+          <button
+            type="button"
+            @click="addFreeformProduct('loved')"
+            class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition shadow-sm"
+          >
+            + Adicionar aos Favoritos
+          </button>
+        </div>
+
+        <!-- Disliked Products Box -->
+        <div class="p-5 rounded-2xl bg-rose-50/60 border border-rose-200 space-y-3.5">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-rose-950">🚫 Produto Não Favorito (O que deu errado)</span>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Escrita livre</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-rose-900 mb-1">
+              Descreva o produto do seu jeito
+            </label>
+            <input
+              type="text"
+              x-model="freeformEntry.dislikedName"
+              @keydown.enter.prevent="addFreeformProduct('disliked')"
+              placeholder="Ex: hidratante roxo da sallve, protetor loreal, protetor bioart..."
+              class="w-full px-3.5 py-2.5 rounded-xl border border-rose-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-rose-800 mb-1">
+              Observações sobre o produto <span class="font-normal text-rose-700">(Opcional — pode citar pontos negativos e positivos)</span>
+            </label>
+            <input
+              type="text"
+              x-model="freeformEntry.dislikedReason"
+              @keydown.enter.prevent="addFreeformProduct('disliked')"
+              placeholder="Ex: Preço bom, mas deixou a pele oleosa, white cast ou esfarelou..."
+              class="w-full px-3.5 py-2 rounded-xl border border-rose-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500"
+            />
+          </div>
+
+          <button
+            type="button"
+            @click="addFreeformProduct('disliked')"
+            class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold transition shadow-sm"
+          >
+            + Adicionar aos Não Favoritos
+          </button>
+        </div>
+      </div>
+
+      <!-- Added Free-Form Products & Shade References List -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="text-xs font-bold uppercase tracking-wider text-slate-500">
+            Itens Informados para Análise da IA (<span x-text="disambiguatedCards.length"></span> item(ns))
+          </div>
+          <button
+            type="button"
+            x-show="disambiguatedCards.length > 0"
+            @click="disambiguatedCards = []; hasTintedInLoved = false; awaitingMatchConfirmation = false;"
+            class="text-xs text-rose-600 hover:underline font-medium"
+          >
+            Limpar todos
+          </button>
+        </div>
+
+        <div x-show="disambiguatedCards.length === 0" class="p-5 rounded-xl border border-dashed border-slate-300 text-center text-xs sm:text-sm text-slate-500">
+          Nenhum produto favorito ou não favorito adicionado ainda (opcional). Escreva acima com suas palavras e clique em adicionar, ou clique diretamente em <strong>Executar Orquestração</strong>.
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" x-show="disambiguatedCards.length > 0">
+          <template x-for="(card, cIdx) in disambiguatedCards" :key="card.id">
+            <div
+              :class="card.confirmed
+                ? (card.sentiment === 'shade_reference'
+                    ? 'border-indigo-500 bg-indigo-50/50'
+                    : (card.sentiment === 'loved' ? 'border-emerald-500 bg-emerald-50/40' : 'border-rose-400 bg-rose-50/40'))
+                : 'border-slate-200 bg-slate-100 opacity-60'"
+              class="p-4 rounded-xl border-2 transition flex items-start justify-between gap-3"
+            >
+              <div class="space-y-2 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    :class="card.sentiment === 'shade_reference'
+                      ? 'bg-indigo-100 text-indigo-900'
+                      : (card.sentiment === 'loved' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800')"
+                    class="px-2 py-0.5 rounded text-[11px] font-bold uppercase"
+                    x-text="card.sentiment === 'shade_reference' ? '🎨 Base / Tom de Referência (Etapa 1.A)' : (card.sentiment === 'loved' ? '💚 Produto Favorito' : '🚫 Produto Não Favorito')"
+                  ></span>
+                  <span
+                    x-show="card.ai_resolved && card.sentiment !== 'shade_reference'"
+                    class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-900 text-[10px] font-bold"
+                  >
+                    🔍 Produto Identificado pela IA
+                  </span>
+                  <span
+                    x-show="card.is_tinted_sunscreen"
+                    class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[11px] font-semibold"
+                  >
+                    ☀️ Protetor Com Cor
+                  </span>
+                </div>
+
+                <!-- Show both what the user typed AND what the AI found once resolved -->
+                <div x-show="card.ai_resolved && card.official_name && card.official_name !== card.raw_input" class="text-[11px] text-slate-500">
+                  Você digitou: <em x-text="card.raw_input"></em>
+                </div>
+                <div class="font-bold text-slate-900 text-sm sm:text-base" x-text="card.official_name || card.raw_input"></div>
+
+                <div x-show="card.brand && card.brand !== 'Análise Automática IA'" class="text-xs text-slate-600">
+                  <strong>Marca:</strong> <span x-text="card.brand"></span>
+                  <span x-show="card.predominant_texture"> • <strong>Textura:</strong> <span x-text="card.predominant_texture"></span></span>
+                </div>
+
+                <!-- Optional Observation Field for Loved / Disliked Items -->
+                <div x-show="card.sentiment !== 'shade_reference'" class="pt-1 space-y-2">
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Observação (opcional — pode ter comentários positivos e negativos):
+                    </label>
+                    <input
+                      type="text"
+                      x-model="card.user_reason"
+                      @input="card.ai_confirmed = false"
+                      placeholder="Ex: Rende bastante e não deixa white cast, mas precisa selar com pó..."
+                      class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs text-slate-800"
+                    />
+                  </div>
+
+                  <!-- Extracted Positives & Negatives Breakdown from Observation -->
+                  <div
+                    x-show="(card.extracted_positives && card.extracted_positives.length > 0) || (card.extracted_negatives && card.extracted_negatives.length > 0)"
+                    class="p-2.5 rounded-lg bg-white/90 border border-slate-200 space-y-1.5 text-[11px]"
+                  >
+                    <div class="font-bold text-slate-700">🧠 Análise da sua Observação (Positivos &amp; Negativos):</div>
+                    <template x-if="card.extracted_positives && card.extracted_positives.length > 0">
+                      <div class="flex flex-wrap gap-1">
+                        <template x-for="pos in card.extracted_positives" :key="pos">
+                          <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 font-semibold" x-text="'👍 ' + pos"></span>
+                        </template>
+                      </div>
+                    </template>
+                    <template x-if="card.extracted_negatives && card.extracted_negatives.length > 0">
+                      <div class="flex flex-wrap gap-1">
+                        <template x-for="neg in card.extracted_negatives" :key="neg">
+                          <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-950 font-semibold" x-text="'⚠️ Ressalva/Negativo: ' + neg"></span>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- Editable Shade & Undertone Confirmation for Reference Base Card -->
+                <div
+                  x-show="card.sentiment === 'shade_reference'"
+                  class="pt-2 mt-1 border-t border-indigo-200/70 flex flex-wrap items-center gap-2 text-xs"
+                >
+                  <label class="font-semibold text-indigo-950">Tom Confirmado:</label>
+                  <input
+                    type="text"
+                    x-model="card.detected_shade"
+                    class="px-2.5 py-1 rounded border border-indigo-300 bg-white text-indigo-950 font-bold text-xs w-40"
+                    placeholder="Ex: NC25 / M20"
+                  />
+                  <span
+                    x-show="card.detected_undertone"
+                    class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 text-[11px] font-medium"
+                    x-text="card.detected_undertone"
+                  ></span>
+                </div>
+              </div>
+
+              <div class="flex flex-col items-end gap-2">
+                <button
+                  type="button"
+                  @click="removeCard(cIdx)"
+                  class="text-xs text-slate-400 hover:text-rose-600 font-bold px-2 py-1 rounded hover:bg-rose-50 transition"
+                  title="Remover item"
+                >
+                  ✕
+                </button>
+                <input
+                  type="checkbox"
+                  x-model="card.confirmed"
+                  class="h-4 w-4 rounded border-slate-300 text-rosewood-600 focus:ring-rosewood-500"
+                  title="Incluir na análise"
+                />
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Post-Click Confirmation Banner: Shows what products the AI found before running the full pipeline -->
+      <div
+        x-show="awaitingMatchConfirmation"
+        x-transition
+        class="p-5 rounded-2xl bg-indigo-50 border-2 border-indigo-400 space-y-3 shadow-sm"
+      >
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="space-y-1">
+            <div class="text-sm sm:text-base font-extrabold text-indigo-950 flex items-center gap-2">
+              <span>🔎 Confira os Produtos Encontrados pela IA antes de Concluir</span>
+            </div>
+            <p class="text-xs text-indigo-900">
+              Identificamos acima os <strong>produtos oficiais correspondentes</strong> ao que você digitou e separamos os <strong>pontos positivos (👍) e negativos/ressalvas (⚠️)</strong> das suas observações. Verifique se estão corretos (você pode desmarcar ou remover qualquer item no <strong>✕</strong>) e clique em confirmar:
+            </p>
+          </div>
+          <button
+            type="button"
+            @click="confirmResolvedAndExecute()"
+            :disabled="isOrchestrating"
+            class="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs sm:text-sm shadow-md transition shrink-0"
+          >
+            <span x-show="!isOrchestrating">✅ Confirmar Produtos Encontrados e Gerar Recomendação</span>
+            <span x-show="isOrchestrating">Validando Links &amp; Preços via Print IA...</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Multi-Agent Funnel Launch Button -->
+      <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="text-xs text-slate-500">
+          Ao clicar ao lado, a IA <strong>identificará os produtos favoritos/não favoritos digitados para sua confirmação</strong>, analisará <strong>comentários mistos (positivos e negativos)</strong> e validará os links finais por <strong>captura de tela (print) + IA Generativa</strong> para garantir estoque ativo e preço real.
+        </div>
+        <button
+          type="button"
+          @click="runOrchestrator()"
+          :disabled="isOrchestrating || isResolvingMatches"
+          class="px-6 py-3.5 rounded-xl bg-rosewood-600 hover:bg-rosewood-700 disabled:opacity-50 text-white font-bold text-sm sm:text-base shadow-md transition flex items-center justify-center gap-2 shrink-0"
+        >
+          <span x-show="!isOrchestrating && !isResolvingMatches">🚀 Executar Orquestração Multi-Agente (4 Estágios)</span>
+          <span x-show="isResolvingMatches">Identificando Produtos Digitados...</span>
+          <span x-show="isOrchestrating">Executando Funil &amp; Verificando Preços...</span>
+        </button>
+      </div>
+
+      <!-- Error Alert Banner -->
+      <div x-show="errorMessage" x-cloak class="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-medium">
+        <span x-text="errorMessage"></span>
+      </div>
+    </section>
+
+    <!-- STEP 1.C & 1.D: MULTI-AGENT FUNNEL TELEMETRY & FINAL CURATED CARDS -->
+    <section x-show="result" x-cloak x-transition class="space-y-8">
+
+      <!-- Budget Exceeded Fallback Alert (if triggered) -->
+      <div
+        x-show="result?.telemetry?.budget_exceeded_alert"
+        class="p-5 rounded-2xl bg-amber-50 border-2 border-amber-400 text-amber-950 flex items-start gap-3 shadow-sm"
+      >
+        <span class="text-2xl">⚠️</span>
+        <div>
+          <h3 class="font-bold text-sm sm:text-base">Fallback de Orçamento Acionado (Lista Nunca Vazia)</h3>
+          <p class="text-xs sm:text-sm text-amber-900 mt-0.5" x-text="result?.telemetry?.budget_alert_message"></p>
+        </div>
+      </div>
+
+      <!-- 4-Stage Pipeline Telemetry Breakdown -->
+      <div class="bg-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-md space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-white/10 pb-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-rose-300">Telemetria LangGraph • Fan-out / Fan-in</span>
+            <h2 class="text-xl font-bold mt-0.5">Raciocínio Simultâneo dos Agentes Especialistas</h2>
+          </div>
+          <div class="flex flex-wrap gap-2 text-xs">
+            <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+              Total Recomendado: R$ <span x-text="result?.telemetry?.total_recommended_price?.toFixed(2)"></span>
+              / Orçamento: R$ <span x-text="result?.telemetry?.budget_limit?.toFixed(2)"></span>
+            </span>
+            <span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30">
+              Webhook n8n Assíncrono: Disparado (3s Timeout Safe)
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <!-- Stage 1A -->
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+            <div class="font-bold text-rose-300 uppercase">Agente 1A • Consenso Social (Paralelo)</div>
+            <p class="text-slate-300" x-text="result?.telemetry?.stage_1a_social?.summary_rationale"></p>
+            <div class="pt-1">
+              <div class="text-[11px] font-semibold text-emerald-300">Motivos Práticos Buscados:</div>
+              <ul class="list-disc list-inside text-slate-300 space-y-0.5 mt-0.5">
+                <template x-for="s in (result?.telemetry?.stage_1a_social?.success_drivers || []).slice(0, 3)" :key="s">
+                  <li x-text="s"></li>
+                </template>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Stage 1B -->
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+            <div class="font-bold text-amber-300 uppercase">Agente 1B • Fórmula &amp; Textura (GPT-4o-mini)</div>
+            <div class="px-2 py-1 rounded bg-amber-400/20 text-amber-200 font-semibold" x-text="result?.telemetry?.stage_1b_formulation?.enforced_texture_rule"></div>
+            <div>
+              <div class="text-[11px] font-semibold text-sky-300">Ativos Mapeados:</div>
+              <div class="flex flex-wrap gap-1 mt-1">
+                <template x-for="act in (result?.telemetry?.stage_1b_formulation?.beneficial_actives || [])" :key="act">
+                  <span class="px-1.5 py-0.5 rounded bg-white/10 text-[11px]" x-text="act"></span>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 2 & 3 -->
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+            <div class="font-bold text-sky-300 uppercase">Estágios 2 &amp; 3 • Preço, Reclame Aqui &amp; Findation</div>
+            <p class="text-slate-300">
+              Itens de farmácias/lojas analisados: <strong x-text="result?.telemetry?.stage_2_total_scraped"></strong> •
+              Finalistas aprovados: <strong x-text="result?.telemetry?.stage_2_approved_count"></strong>
+            </p>
+            <div class="pt-1 border-t border-white/10">
+              <div class="text-[11px] font-semibold text-amber-300">Roteamento Condicional Findation:</div>
+              <p class="text-slate-300 mt-0.5" x-text="result?.telemetry?.stage_3_routing_reason"></p>
+            </div>
+          </div>
+
+          <!-- Stage 4 -->
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+            <div class="font-bold text-emerald-300 uppercase">Estágio 4 • Guardrail (Claude 3.7 Sonnet)</div>
+            <p class="text-slate-300" x-text="result?.curated_summary"></p>
+            <div x-show="(result?.telemetry?.stage_1b_formulation?.forbidden_ingredients || []).length > 0">
+              <div class="text-[11px] font-semibold text-rose-300">Gatilhos Bloqueados:</div>
+              <ul class="list-disc list-inside text-slate-300 space-y-0.5 mt-0.5">
+                <template x-for="f in (result?.telemetry?.stage_1b_formulation?.forbidden_ingredients || []).slice(0, 2)" :key="f">
+                  <li x-text="f"></li>
+                </template>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Final Curated Product Cards -->
+      <div class="space-y-4">
+        <h2 class="text-xl sm:text-2xl font-bold text-slate-900">
+          🏆 Recomendação Final Hiperpersonalizada
+        </h2>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <template x-for="(item, index) in (result?.recommendations || [])" :key="item.product_name + index">
+            <article class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
+              <div class="p-6 space-y-4">
+                <!-- Top Badges: Routine Step / Category + Match Score -->
+                <div class="flex items-center justify-between gap-2">
+                  <span
+                    class="px-3 py-1 rounded-full bg-rosewood-50 text-rosewood-700 text-xs font-bold uppercase tracking-wide"
+                    x-text="item.routine_step || item.category"
+                  ></span>
+                  <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 font-bold text-xs">
+                    <span>Match</span>
+                    <span x-text="item.match_score + '%'"></span>
+                  </div>
+                </div>
+
+                <!-- Product Title & Brand -->
+                <div>
+                  <div class="text-xs font-semibold uppercase tracking-wider text-slate-400" x-text="item.brand"></div>
+                  <h3 class="text-lg font-bold text-slate-900 mt-0.5" x-text="item.product_name"></h3>
+                  <p class="text-xs text-slate-600 mt-1">
+                    <strong>Textura:</strong> <span x-text="item.texture"></span>
+                  </p>
+                </div>
+
+                <!-- Price, Store & Reclame Aqui Trust Evaluation -->
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="text-[11px] text-slate-500 uppercase font-semibold">Preço Oficial Vigente</div>
+                      <div class="text-xl font-extrabold text-slate-900">
+                        R$ <span x-text="item.price.toFixed(2)"></span>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <span class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800" x-text="item.store_name"></span>
+                      <div class="text-[11px] font-semibold text-emerald-700 mt-1" x-text="item.store_reputation_score"></div>
+                    </div>
+                  </div>
+                  <div class="text-[11px] text-indigo-900 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1 font-semibold" x-text="item.price_verification_note || '📸 Preço e estoque verificados na página do link.'"></div>
+                  <div class="text-[11px] text-emerald-900 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5 font-medium" x-text="item.store_reputation_badge"></div>
+                </div>
+
+                <!-- Findation Shade Translation Box -->
+                <div
+                  :class="item.shade_match_method === 'undertone_approx'
+                    ? 'bg-amber-50 border-amber-300 text-amber-950'
+                    : (item.shade_match_method === 'findation_exact' ? 'bg-indigo-50 border-indigo-200 text-indigo-950' : 'bg-slate-50 border-slate-200 text-slate-700')"
+                  class="p-3.5 rounded-xl border text-xs space-y-1"
+                >
+                  <div class="font-bold flex items-center justify-between">
+                    <span>🎨 Tom / Acabamento Recomendado:</span>
+                    <span
+                      x-show="item.shade_match_method === 'findation_exact'"
+                      class="px-1.5 py-0.5 rounded bg-indigo-200 text-indigo-900 text-[10px] uppercase font-bold"
+                    >Findation Exato</span>
+                    <span
+                      x-show="item.shade_match_method === 'undertone_approx'"
+                      class="px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 text-[10px] uppercase font-bold"
+                    >Aproximação Subtom</span>
+                  </div>
+                  <div class="text-sm font-bold" x-text="item.recommended_shade"></div>
+                  <p class="text-[11px] opacity-85" x-text="item.shade_translation_note"></p>
+                </div>
+
+                <!-- Dermatological Guardrail Badge & Skin Types -->
+                <div class="space-y-2">
+                  <div
+                    :class="item.irritant_warnings && item.irritant_warnings.length > 0
+                      ? 'bg-amber-50 text-amber-900 border-amber-300'
+                      : 'bg-emerald-50 text-emerald-900 border-emerald-200'"
+                    class="px-3 py-2 rounded-lg border text-xs font-semibold"
+                    x-text="item.dermatological_badge"
+                  ></div>
+
+                  <div class="flex flex-wrap gap-1">
+                    <template x-for="st in item.indicated_skin_types" :key="st">
+                      <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium" x-text="st"></span>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- Key Actives -->
+                <div>
+                  <div class="text-xs font-bold text-slate-700 mb-1">Ativos Principais:</div>
+                  <div class="flex flex-wrap gap-1.5">
+                    <template x-for="act in item.key_actives" :key="act">
+                      <span class="px-2 py-0.5 rounded-md bg-rosewood-50 text-rosewood-700 border border-rosewood-200 text-[11px] font-medium" x-text="act"></span>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- Pros & Cons from Real Consumers -->
+                <div class="grid grid-cols-1 gap-2.5 pt-2 border-t border-slate-100 text-xs">
+                  <div>
+                    <div class="font-bold text-emerald-800 mb-1">👍 Prós segundo internautas:</div>
+                    <ul class="space-y-1 text-slate-600">
+                      <template x-for="pro in item.pros" :key="pro">
+                        <li class="flex items-start gap-1.5">
+                          <span class="text-emerald-600 font-bold">✓</span>
+                          <span x-text="pro"></span>
+                        </li>
+                      </template>
+                    </ul>
+                  </div>
+                  <div>
+                    <div class="font-bold text-rose-800 mb-1">👎 Pontos de atenção (Contras):</div>
+                    <ul class="space-y-1 text-slate-600">
+                      <template x-for="con in item.cons" :key="con">
+                        <li class="flex items-start gap-1.5">
+                          <span class="text-rose-500 font-bold">•</span>
+                          <span x-text="con"></span>
+                        </li>
+                      </template>
+                    </ul>
+                  </div>
+                </div>
+
+                <!-- Claude Curator Verdict -->
+                <p class="text-xs italic text-slate-500 bg-slate-50 p-3 rounded-lg" x-text="item.curator_verdict"></p>
+              </div>
+
+              <!-- Direct Purchase Links Footer (Primary Link Found via Google + Trusted Pharmacies/Retailers) -->
+              <div class="p-4 bg-slate-50 border-t border-slate-200/80 space-y-2.5">
+                <a
+                  :href="item.store_url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-rosewood-700 text-white font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2"
+                >
+                  <span>🔎 Acessar Link Encontrado no Google (<span x-text="item.store_name"></span>)</span>
+                  <span>↗</span>
+                </a>
+
+                <!-- Alternative Verified Pharmacy Links -->
+                <div x-show="item.alternative_store_links && item.alternative_store_links.length > 0" class="pt-1">
+                  <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                    Outras Opções de Busca &amp; Grandes Farmácias (Reclame Aqui RA1000/Ótimo):
+                  </div>
+                  <div class="flex flex-wrap gap-1.5">
+                    <template x-for="alt in item.alternative_store_links" :key="alt.store">
+                      <a
+                        :href="alt.url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="px-2 py-1 rounded-md bg-white hover:bg-rosewood-50 border border-slate-200 text-[11px] font-medium text-slate-700 hover:text-rosewood-700 transition"
+                      >
+                        <span x-text="alt.store"></span>
+                        <span class="text-[10px] text-emerald-700 font-semibold" x-text="'(' + alt.ra_score + ')'"></span>
+                        <span>↗</span>
+                      </a>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </template>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function beautyOrchestratorApp() {
+      return {
+        mainJourney: 'skincare',
+        skincareMode: 'produto_especifico',
+
+        // Step 1.B: Free-form Loved & Disliked Product Input (No Confirmation Needed + Optional Reason)
+        freeformEntry: {
+          lovedName: '',
+          lovedReason: '',
+          dislikedName: '',
+          dislikedReason: '',
+        },
+
+        // Shade Reference Brand Search (Step 1.A: User types Brand of Base/Sunscreen -> Confirms -> Picks Product & Shade)
+        shadeBrandSearch: {
+          brandInput: '',
+          loading: false,
+          confirmedBrand: '',
+          notFoundMessage: '',
+          justAddedMessage: '',
+          products: [],
+          selectedProductIndex: 0,
+          selectedShade: '',
+          customShade: '',
+        },
+
+        form: {
+          skin_type: 'oleosa',
+          is_sensitive: true,
+          budget: 85.00,
+          active_problems: ['acne', 'manchas_melasma', 'poros_dilatados'],
+          skincare_category: 'protetor_solar',
+          target_problem: '',
+          prefers_tinted_sunscreen: true,
+          reference_shade: '',
+          makeup_category: 'base',
+          chromatic_expectation: 'blush pêssego queimado sem partículas de brilho',
+        },
+
+        disambiguatedCards: [],
+        hasTintedInLoved: false,
+        awaitingMatchConfirmation: false,
+        isResolvingMatches: false,
+        isOrchestrating: false,
+        errorMessage: '',
+        result: null,
+
+        skinTypeOptions: [
+          { value: 'oleosa', label: 'Oleosa' },
+          { value: 'mista', label: 'Mista' },
+          { value: 'seca', label: 'Seca' },
+          { value: 'normal', label: 'Normal' },
+        ],
+
+        skincareProblemOptions: [
+          { value: 'acne', label: 'Acne Ativa' },
+          { value: 'manchas_melasma', label: 'Manchas / Melasma' },
+          { value: 'rosacea', label: 'Rosácea / Vermelhidão' },
+          { value: 'poros_dilatados', label: 'Poros Dilatados' },
+          { value: 'comedoes', label: 'Comedões Fechados' },
+          { value: 'cravos', label: 'Cravos' },
+        ],
+
+        skincareCategories: [
+          { value: 'protetor_solar', label: 'Protetor Solar' },
+          { value: 'hidratante', label: 'Hidratante' },
+          { value: 'serum', label: 'Sérum' },
+          { value: 'tratamento', label: 'Tratamento' },
+          { value: 'sabonete_facial', label: 'Sabonete Facial' },
+          { value: 'cleansing_oil', label: 'Cleansing Oil' },
+          { value: 'limpeza_micelar', label: 'Limpeza Micelar' },
+          { value: 'tonico', label: 'Tônico' },
+        ],
+
+        makeupCategories: [
+          { value: 'base', label: 'Base' },
+          { value: 'corretivo', label: 'Corretivo' },
+          { value: 'blush', label: 'Blush (Cromático)' },
+          { value: 'contorno', label: 'Contorno (Cromático)' },
+          { value: 'iluminador', label: 'Iluminador (Cromático)' },
+          { value: 'sombra', label: 'Sombra (Cromático)' },
+        ],
+
+        addFreeformProduct(sentiment) {
+          this.errorMessage = '';
+          const isLoved = sentiment === 'loved';
+          const rawName = (isLoved ? this.freeformEntry.lovedName : this.freeformEntry.dislikedName || '').trim();
+          const rawReason = (isLoved ? this.freeformEntry.lovedReason : this.freeformEntry.dislikedReason || '').trim();
+
+          if (!rawName) {
+            return;
+          }
+
+          const lowText = (rawName + ' ' + rawReason).toLowerCase();
+          const hasSun = ['protetor', 'fps', 'solar', 'fusion water', 'anthelios', 'episol', 'isdin', 'sun fresh'].some(k => lowText.includes(k));
+          const hasTint = ['com cor', 'color', 'tinted', 'cor '].some(k => lowText.includes(k));
+          const isTinted = hasSun && hasTint;
+
+          const newCard = {
+            id: 'card_' + sentiment + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            raw_input: rawName,
+            sentiment: sentiment,
+            user_reason: rawReason || null,
+            extracted_positives: [],
+            extracted_negatives: [],
+            official_name: rawName,
+            brand: 'Análise Automática IA',
+            predominant_texture: '',
+            category_detected: hasSun ? 'protetor_solar' : 'skincare',
+            is_tinted_sunscreen: isTinted,
+            detected_shade: null,
+            detected_undertone: null,
+            store_name: 'Busca Google',
+            store_url: 'https://www.google.com.br/search?q=' + encodeURIComponent(rawName),
+            confirmed: true,
+            ai_resolved: false,
+            ai_confirmed: false,
+          };
+
+          this.disambiguatedCards.push(newCard);
+          this.awaitingMatchConfirmation = false;
+          if (isLoved) {
+            this.freeformEntry.lovedName = '';
+            this.freeformEntry.lovedReason = '';
+          } else {
+            this.freeformEntry.dislikedName = '';
+            this.freeformEntry.dislikedReason = '';
+          }
+          this.recomputeTintedFlag();
+        },
+
+        async searchBrandForShadeReference() {
+          this.errorMessage = '';
+          this.shadeBrandSearch.notFoundMessage = '';
+          this.shadeBrandSearch.justAddedMessage = '';
+          const q = (this.shadeBrandSearch.brandInput || '').trim();
+          if (!q) {
+            this.errorMessage = 'Digite a marca da sua base ou protetor com cor primeiro.';
+            return;
+          }
+          this.shadeBrandSearch.loading = true;
+          try {
+            const resp = await fetch('/api/search-brand-products', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                brand_query: q,
+                product_hint: null,
+                only_shade_products: true,
+              }),
+            });
+            if (!resp.ok) {
+              throw new Error('Erro ao buscar bases/protetores da marca.');
+            }
+            const data = await resp.json();
+            if (!data.found || !data.products || data.products.length === 0) {
+              this.shadeBrandSearch.confirmedBrand = '';
+              this.shadeBrandSearch.products = [];
+              this.shadeBrandSearch.notFoundMessage = data.message || `A marca "${q}" não foi encontrada.`;
+              return;
+            }
+            this.shadeBrandSearch.confirmedBrand = data.confirmed_brand;
+            this.shadeBrandSearch.products = data.products || [];
+            this.shadeBrandSearch.selectedProductIndex = 0;
+            this.$nextTick(() => {
+              this.shadeBrandSearch.selectedProductIndex = 0;
+              this.onShadeSearchProductChange();
+            });
+          } catch (err) {
+            this.errorMessage = err.message || 'Erro ao buscar a marca da base.';
+          } finally {
+            this.shadeBrandSearch.loading = false;
+          }
+        },
+
+        onShadeSearchProductChange() {
+          const shades = this.getShadeSearchAvailableShades();
+          this.shadeBrandSearch.selectedShade = shades.length > 0 ? shades[0] : '';
+        },
+
+        getShadeSearchAvailableShades() {
+          const products = this.shadeBrandSearch.products || [];
+          const idx = Number(this.shadeBrandSearch.selectedProductIndex);
+          const prod = (!Number.isNaN(idx) && products[idx]) ? products[idx] : products[0];
+          return (prod && prod.shades) ? prod.shades : [];
+        },
+
+        getConfirmedShadeCards() {
+          return (this.disambiguatedCards || []).filter(
+            c => c.sentiment === 'shade_reference' && c.confirmed
+          );
+        },
+
+        syncReferenceShadeSummary() {
+          const shadeCards = this.getConfirmedShadeCards();
+          this.form.reference_shade = shadeCards
+            .map(c => `${c.raw_input}`)
+            .join(' + ');
+        },
+
+        confirmShadeProductSelection() {
+          const products = this.shadeBrandSearch.products || [];
+          const idx = Number(this.shadeBrandSearch.selectedProductIndex);
+          const prod = (!Number.isNaN(idx) && products[idx]) ? products[idx] : products[0];
+          if (!prod) return;
+
+          const availableShades = (prod && prod.shades) ? prod.shades : [];
+          const shadeCode = (this.shadeBrandSearch.customShade && this.shadeBrandSearch.customShade.trim())
+            ? this.shadeBrandSearch.customShade.trim()
+            : (this.shadeBrandSearch.selectedShade || availableShades[0] || 'Médio');
+
+          const displayOfficial = `${prod.official_name} — Tom: ${shadeCode}`;
+
+          // Allow multiple bases/concealers; only prevent exact duplicate of the same product + shade
+          this.disambiguatedCards = this.disambiguatedCards.filter(
+            c => !(c.sentiment === 'shade_reference' && c.official_name === displayOfficial)
+          );
+
+          const lowShade = shadeCode.toLowerCase();
+          const detectedUndertone = (lowShade.includes('nw') || lowShade.includes('frio') || lowShade.includes('rosad') || lowShade.includes('cool') || lowShade.includes('pink'))
+            ? 'Frio (Fundo Rosado)'
+            : 'Neutro-Quente (Equilibrado)';
+
+          const newCard = {
+            id: 'card_shade_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            raw_input: `${prod.official_name} (${shadeCode})`,
+            sentiment: 'shade_reference',
+            official_name: displayOfficial,
+            brand: prod.brand,
+            predominant_texture: prod.predominant_texture,
+            category_detected: prod.category_detected,
+            is_tinted_sunscreen: Boolean(prod.is_tinted_sunscreen),
+            detected_shade: shadeCode,
+            detected_undertone: detectedUndertone,
+            store_name: prod.store_name || 'Droga Raia',
+            store_url: prod.store_url || 'https://www.drogaraia.com.br',
+            confirmed: true,
+          };
+
+          this.disambiguatedCards.unshift(newCard);
+          this.shadeBrandSearch.customShade = '';
+          this.syncReferenceShadeSummary();
+          const totalBases = this.getConfirmedShadeCards().length;
+          this.shadeBrandSearch.justAddedMessage = `✓ "${prod.official_name}" (Tom: ${shadeCode}) adicionado abaixo! Total de bases/corretivos de referência: ${totalBases}. Você pode buscar e adicionar mais marcas acima.`;
+        },
+
+        removeCard(cardIndex) {
+          this.disambiguatedCards.splice(cardIndex, 1);
+          this.recomputeTintedFlag();
+          this.syncReferenceShadeSummary();
+        },
+
+        removeCardById(cardId) {
+          this.disambiguatedCards = this.disambiguatedCards.filter(c => c.id !== cardId);
+          this.recomputeTintedFlag();
+          this.syncReferenceShadeSummary();
+        },
+
+        recomputeTintedFlag() {
+          this.hasTintedInLoved = this.disambiguatedCards.some(
+            c => c.confirmed && c.sentiment === 'loved' && c.is_tinted_sunscreen
+          );
+          if (this.hasTintedInLoved) {
+            this.form.prefers_tinted_sunscreen = true;
+          }
+        },
+
+        async loadPresetExample() {
+          this.shadeBrandSearch.brandInput = 'MAC';
+          await this.searchBrandForShadeReference();
+          this.shadeBrandSearch.selectedShade = 'NC25';
+          this.confirmShadeProductSelection();
+
+          this.disambiguatedCards = this.disambiguatedCards.filter(c => c.sentiment === 'shade_reference');
+
+          this.disambiguatedCards.push(
+            {
+              id: 'preset_loved_isdin',
+              raw_input: 'protetor com cor da isdin fusion water',
+              sentiment: 'loved',
+              user_reason: 'Toque super fluido, não arde os olhos e uniformiza sem pesar',
+              official_name: 'ISDIN Fotoprotector Fusion Water Color FPS 50',
+              brand: 'ISDIN',
+              predominant_texture: 'Fluido Aquoso Ultraleve Com Cor (Toque Seco / Não Arde os Olhos)',
+              category_detected: 'protetor_solar',
+              is_tinted_sunscreen: true,
+              detected_shade: null,
+              detected_undertone: null,
+              store_name: 'Busca Google',
+              store_url: 'https://www.google.com.br/search?q=ISDIN+Fotoprotector+Fusion+Water+Color+FPS+50+comprar',
+              confirmed: true,
+            },
+            {
+              id: 'preset_loved_neutrogena',
+              raw_input: 'hidratante hydro boost da neutrogena',
+              sentiment: 'loved',
+              user_reason: 'Textura em gel bem fresca que absorve rápido',
+              official_name: 'Neutrogena Hydro Boost Water Gel Hidratante Facial',
+              brand: 'Neutrogena',
+              predominant_texture: 'Water Gel Aquoso Refrescante Oil-Free (Ácido Hialurônico)',
+              category_detected: 'hidratante',
+              is_tinted_sunscreen: false,
+              detected_shade: null,
+              detected_undertone: null,
+              store_name: 'Busca Google',
+              store_url: 'https://www.google.com.br/search?q=Neutrogena+Hydro+Boost+Water+Gel+comprar',
+              confirmed: true,
+            },
+            {
+              id: 'preset_disliked_sallve',
+              raw_input: 'hidratante roxo da sallve',
+              sentiment: 'disliked',
+              user_reason: 'Achei pesado para minha pele oleosa e deu brilho',
+              official_name: 'Sallve Hidratante Reparador Múltiplo (Embalagem Roxa)',
+              brand: 'Sallve',
+              predominant_texture: 'Creme Rico Nutritivo (Ceramidas + Pantenol)',
+              category_detected: 'hidratante',
+              is_tinted_sunscreen: false,
+              detected_shade: null,
+              detected_undertone: null,
+              store_name: 'Busca Google',
+              store_url: 'https://www.google.com.br/search?q=Sallve+Hidratante+Reparador+Multiplo+comprar',
+              confirmed: true,
+            }
+          );
+          this.recomputeTintedFlag();
+        },
+
+        setMainJourney(journey) {
+          this.mainJourney = journey;
+          this.errorMessage = '';
+        },
+
+        toggleProblem(prob) {
+          const idx = this.form.active_problems.indexOf(prob);
+          if (idx >= 0) {
+            this.form.active_problems.splice(idx, 1);
+          } else {
+            this.form.active_problems.push(prob);
+          }
+        },
+
+        async confirmResolvedAndExecute() {
+          this.errorMessage = '';
+          this.disambiguatedCards = (this.disambiguatedCards || []).map(c => ({
+            ...c,
+            ai_confirmed: true,
+          }));
+          this.awaitingMatchConfirmation = false;
+          await this.executeRecommendPipeline();
+        },
+
+        async runOrchestrator() {
+          this.errorMessage = '';
+
+          // Automatically capture any pending free-form text typed in Step 1.B even if user didn't click '+ Adicionar'
+          if (this.freeformEntry.lovedName && this.freeformEntry.lovedName.trim()) {
+            this.addFreeformProduct('loved');
+          }
+          if (this.freeformEntry.dislikedName && this.freeformEntry.dislikedName.trim()) {
+            this.addFreeformProduct('disliked');
+          }
+
+          // If the user has free-form loved/disliked products that have not yet been resolved & confirmed,
+          // first resolve them via AI so the user can see and confirm what products were found!
+          const hasUnconfirmedFreeform = (this.disambiguatedCards || []).some(
+            c => c.sentiment !== 'shade_reference' && !c.ai_confirmed
+          );
+          if (hasUnconfirmedFreeform) {
+            this.isResolvingMatches = true;
+            try {
+              const disResp = await fetch('/api/disambiguate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  loved_inputs: [],
+                  disliked_inputs: [],
+                  items: this.disambiguatedCards,
+                }),
+              });
+              if (disResp.ok) {
+                const disData = await disResp.json();
+                if (disData.cards && disData.cards.length > 0) {
+                  this.disambiguatedCards = disData.cards.map(c => ({
+                    ...c,
+                    ai_resolved: true,
+                    ai_confirmed: false,
+                  }));
+                  this.recomputeTintedFlag();
+                  this.awaitingMatchConfirmation = true;
+                  return;
+                }
+              }
+            } catch (err) {
+              // If disambiguation endpoint fails, fall through to direct pipeline execution
+            } finally {
+              this.isResolvingMatches = false;
+            }
+          }
+
+          await this.executeRecommendPipeline();
+        },
+
+        async executeRecommendPipeline() {
+          const confirmedProducts = this.disambiguatedCards.filter(c => c.confirmed);
+          const confirmedBaseCards = confirmedProducts.filter(c => c.sentiment === 'shade_reference');
+          const effectiveReferenceShade = confirmedBaseCards.length > 0
+            ? confirmedBaseCards.map(c => `${c.official_name} ${c.detected_shade || ''}`.trim()).join(' + ')
+            : (this.form.reference_shade || null);
+
+          let requestBody = {};
+          if (this.mainJourney === 'skincare' && this.skincareMode === 'rotina_completa') {
+            requestBody = {
+              flow_type: 'skincare_rotina',
+              skin_type: this.form.skin_type,
+              is_sensitive: this.form.is_sensitive,
+              budget: Number(this.form.budget),
+              active_problems: this.form.active_problems,
+              prefers_tinted_sunscreen: Boolean(this.form.prefers_tinted_sunscreen || this.hasTintedInLoved),
+              reference_shade: effectiveReferenceShade,
+              confirmed_products: confirmedProducts,
+            };
+          } else if (this.mainJourney === 'skincare' && this.skincareMode === 'produto_especifico') {
+            requestBody = {
+              flow_type: 'skincare_especifico',
+              skin_type: this.form.skin_type,
+              is_sensitive: this.form.is_sensitive,
+              budget: Number(this.form.budget),
+              category: this.form.skincare_category,
+              target_problem: this.form.target_problem || null,
+              prefers_tinted_sunscreen: Boolean(this.form.prefers_tinted_sunscreen || this.hasTintedInLoved),
+              reference_shade: effectiveReferenceShade,
+              active_problems: this.form.active_problems,
+              confirmed_products: confirmedProducts,
+            };
+          } else {
+            requestBody = {
+              flow_type: 'maquiagem',
+              skin_type: this.form.skin_type,
+              is_sensitive: this.form.is_sensitive,
+              budget: Number(this.form.budget),
+              category: this.form.makeup_category,
+              reference_shade: effectiveReferenceShade,
+              chromatic_expectation: this.form.chromatic_expectation || null,
+              confirmed_products: confirmedProducts,
+            };
+          }
+
+          this.isOrchestrating = true;
+          try {
+            const resp = await fetch('/api/recommend', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(requestBody),
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              const detail = data.detail ? (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)) : 'Erro de validação.';
+              throw new Error(detail);
+            }
+            if (data.resolved_user_products && data.resolved_user_products.length > 0) {
+              this.disambiguatedCards = data.resolved_user_products.map(c => ({
+                ...c,
+                ai_resolved: true,
+                ai_confirmed: true,
+              }));
+            }
+            this.result = data;
+          } catch (err) {
+            this.errorMessage = err.message || 'Falha ao executar o motor multi-agente.';
+          } finally {
+            this.isOrchestrating = false;
+          }
+        }
+      };
+    }
+  </script>
+</body>
+</html>

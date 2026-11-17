@@ -1,0 +1,24 @@
+# Variáveis de ambiente e chaves de API (CRÍTICO: nunca subir o .env!)
+.env
+
+# Ambiente virtual Python
+venv/
+.venv/
+env/
+
+# Cache e arquivos compilados do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Banco de dados local do Django
+db.sqlite3
+db.sqlite3-journal
+
+# Configurações locais do editor e sistema operacional (macOS)
+.vscode/
+.DS_Store
+
+# Logs e arquivos temporários
+*.log
+local_settings.py
